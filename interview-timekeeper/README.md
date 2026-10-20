@@ -21,7 +21,7 @@ While it runs:
 - **+1 min / −1 min** shift every slot. **Restart this slot now** re-anchors the current interview if a parent arrives late. Tapping any row jumps straight to it.
 - **Sound on/off** mutes the chimes; **Test chime** plays one so you can set the volume beforehand.
 
-Your list and settings are remembered in the browser you used, so the page survives a refresh mid-evening. Nothing is sent anywhere.
+Your list and settings are remembered in the browser you used, so the page survives a refresh mid-evening. Nothing is sent anywhere. When the evening is over, press **Clear all data** in the setup panel to wipe the stored bookings from that browser (or use a private window, which clears itself).
 
 ## Hosting for colleagues
 
