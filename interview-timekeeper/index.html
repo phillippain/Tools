@@ -24,6 +24,7 @@
   --ok-soft: #e4f3ea;
   --warn-soft: #fbefdb;
   --over-soft: #fbe3e0;
+  --live-s: 58%; --live-l: 40%;
   --display: "Archivo", "Helvetica Neue", Arial, sans-serif;
   --body: "Source Sans 3", "Segoe UI", system-ui, sans-serif;
 }
@@ -33,6 +34,7 @@
     --accent: #4fb3b8; --accent-ink: #08191b;
     --ok: #5cc98a; --warn: #e9a64a; --over: #ef6a5c;
     --ok-soft: #173126; --warn-soft: #3a2a12; --over-soft: #3d1c19;
+    --live-s: 62%; --live-l: 60%;
     color-scheme: dark;
   }
 }
@@ -41,6 +43,7 @@
   --accent: #4fb3b8; --accent-ink: #08191b;
   --ok: #5cc98a; --warn: #e9a64a; --over: #ef6a5c;
   --ok-soft: #173126; --warn-soft: #3a2a12; --over-soft: #3d1c19;
+  --live-s: 62%; --live-l: 60%;
   color-scheme: dark;
 }
 * { box-sizing: border-box; }
@@ -76,21 +79,19 @@ button.danger { color: var(--over); border-color: var(--over); }
   background: var(--surface); border: 1px solid var(--line); border-radius: 16px; padding: 20px;
   display: grid; gap: 10px; border-top: 6px solid var(--ok); transition: border-color .3s, background .3s;
 }
-.clock.warn { border-top-color: var(--warn); }
-.clock.over { border-top-color: var(--over); background: var(--over-soft); }
-.clock.warn .time { color: var(--warn); }
-.clock.over .time { color: var(--over); }
+.clock { --hue: 145; --live: hsl(var(--hue) var(--live-s) var(--live-l)); border-top-color: var(--live); }
+.clock.over { background: var(--over-soft); }
+.ring { position: relative; width: min(100%, 70vw, 48vh, 460px); aspect-ratio: 1; margin: 4px auto; display: grid; place-items: center; }
+.ring svg { position: absolute; inset: 0; width: 100%; height: 100%; transform: rotate(-90deg); }
+.ring .track { fill: none; stroke: var(--line); stroke-width: 7; }
+.ring .arc { fill: none; stroke: var(--live); stroke-width: 7; stroke-linecap: round; stroke-dasharray: 283; stroke-dashoffset: 0; transition: stroke-dashoffset .25s linear, stroke .3s; }
 .clock .time {
-  font-family: var(--display); font-weight: 700; font-size: clamp(4rem, min(20vw, 30vh), 15rem); line-height: 1;
-  font-variant-numeric: tabular-nums; letter-spacing: -0.03em; color: var(--ok); transition: color .3s;
+  font-family: var(--display); font-weight: 700; font-size: clamp(2.6rem, min(11vw, 12vh), 7rem); line-height: 1;
+  font-variant-numeric: tabular-nums; letter-spacing: -0.03em; color: var(--live); transition: color .3s; position: relative;
 }
 .clock .who { font-family: var(--display); font-weight: 700; font-size: clamp(1.4rem, min(4vw, 5vh), 2.8rem); line-height: 1.15; text-wrap: balance; }
 .clock .sub { font-size: 1.1rem; color: var(--muted); }
 .clock .meta { color: var(--muted); display: flex; gap: 16px; flex-wrap: wrap; font-variant-numeric: tabular-nums; }
-.bar { height: 8px; background: var(--line); border-radius: 4px; overflow: hidden; }
-.bar > i { display: block; height: 100%; width: 0; background: var(--ok); transition: width .25s linear, background .3s; }
-.clock.warn .bar > i { background: var(--warn); }
-.clock.over .bar > i { background: var(--over); width: 100% !important; }
 .next { display: flex; justify-content: space-between; gap: 12px; flex-wrap: wrap; border-top: 1px dashed var(--line); padding-top: 10px; }
 .next b { font-weight: 600; }
 .pulse { animation: pulse 1s ease-in-out infinite; }
@@ -145,8 +146,10 @@ textarea { min-height: 180px; resize: vertical; line-height: 1.5; font-family: u
 
   <section class="clock" id="clock" aria-live="off">
     <div class="eyebrow" id="slotLabel">Not started</div>
-    <div class="time" id="time">7:00</div>
-    <div class="bar" aria-hidden="true"><i id="fill"></i></div>
+    <div class="ring">
+      <svg viewBox="0 0 100 100" aria-hidden="true"><circle class="track" cx="50" cy="50" r="45"></circle><circle class="arc" id="arc" cx="50" cy="50" r="45"></circle></svg>
+      <div class="time" id="time">7:00</div>
+    </div>
     <div class="who" id="who">Paste your bookings below and press Start</div>
     <div class="sub" id="sub"></div>
     <div class="meta"><span id="window"></span><span id="wall"></span></div>
@@ -314,6 +317,15 @@ textarea { min-height: 180px; resize: vertical; line-height: 1.5; font-family: u
     });
   }
 
+  // ---------- ring + continuous colour ----------
+  const C = 2 * Math.PI * 45;
+  function setRing(remainFrac, warnFrac, over) {
+    // remainFrac: 1 = full slot left, 0 = none. Hue runs green (145) → amber (38) at the warning point → red (8) at zero.
+    const f = Math.max(0, Math.min(1, remainFrac)), w = warnFrac > 0 && warnFrac < 1 ? warnFrac : 0.2;
+    const hue = over ? 8 : f > w ? 38 + (145 - 38) * ((f - w) / (1 - w)) : 8 + (38 - 8) * (f / w);
+    $("clock").style.setProperty("--hue", hue.toFixed(1));
+    $("arc").style.strokeDashoffset = (C * (1 - f)).toFixed(2);
+  }
   // ---------- rendering ----------
   let lastIdx = null;
   function render() {
@@ -342,7 +354,7 @@ textarea { min-height: 180px; resize: vertical; line-height: 1.5; font-family: u
     if (!state.running) {
       const c = state.slots.filter(s => !s.isBreak).length;
       $("slotLabel").textContent = "Ready · " + c + " interviews · " + state.len + " min each";
-      $("time").textContent = mmss(state.len * 60000); $("fill").style.width = "0";
+      $("time").textContent = mmss(state.len * 60000); setRing(1, 0, false);
       const f = state.slots[0]; $("who").textContent = f.name; $("sub").textContent = f.sub;
       $("window").textContent = "Timetable " + fmt(f.start) + " – " + fmt(state.slots[n - 1].end);
       $("nextWho").textContent = state.slots[1] ? state.slots[1].name : "—"; $("nextAt").textContent = "";
@@ -354,10 +366,10 @@ textarea { min-height: 180px; resize: vertical; line-height: 1.5; font-family: u
       $("slotLabel").textContent = "Starts in"; $("time").textContent = mmss(st(0) - now);
       $("who").textContent = state.slots[0].name; $("sub").textContent = state.slots[0].sub; $("window").textContent = "First slot " + fmt(st(0));
       $("nextWho").textContent = state.slots[1] ? state.slots[1].name : "—"; $("nextAt").textContent = "";
-      $("fill").style.width = "0"; clock.className = "clock"; return;
+      setRing(1, 0, false); clock.className = "clock"; return;
     }
     if (idx >= n) {
-      $("slotLabel").textContent = "All done"; $("time").textContent = "0:00"; $("fill").style.width = "100%";
+      $("slotLabel").textContent = "All done"; $("time").textContent = "0:00"; setRing(0, 0, false);
       $("who").textContent = "Interviews finished"; $("sub").textContent = ""; $("window").textContent = "Ended " + fmt(en(n - 1));
       $("nextWho").textContent = "—"; $("nextAt").textContent = ""; clock.className = "clock"; $("time").classList.remove("pulse");
       if (!state.chimed.fin) { state.chimed.fin = true; chime("end"); }
@@ -369,7 +381,7 @@ textarea { min-height: 180px; resize: vertical; line-height: 1.5; font-family: u
     const num = state.slots.slice(0, idx + 1).filter(x => !x.isBreak).length, total = state.slots.filter(x => !x.isBreak).length;
     $("slotLabel").textContent = (s.isBreak ? "Break" : "Interview " + num + " of " + total) + " · ends " + fmt(end);
     $("time").textContent = mmss(left); $("time").classList.toggle("pulse", phase === "warn");
-    $("fill").style.width = Math.max(0, Math.min(100, frac * 100)) + "%";
+    setRing(left / dur, warnMs / dur, left <= 0);
     $("who").textContent = s.name; $("sub").textContent = s.sub;
     $("window").textContent = fmt(start) + " – " + fmt(end);
     const nx = state.slots[idx + 1];

@@ -16,7 +16,7 @@ No install, no server, no accounts. It is one HTML file.
 
 While it runs:
 
-- The clock turns amber and chimes with one minute left, then red with an end chime as the next slot begins.
+- A ring around the clock empties as the slot runs, and its colour shifts steadily from green through amber to red. A chime sounds with one minute left and again as the next slot begins.
 - Gaps in your bookings appear as breaks.
 - **+1 min / −1 min** shift every slot. **Restart this slot now** re-anchors the current interview if a parent arrives late. Tapping any row jumps straight to it.
 - **Sound on/off** mutes the chimes; **Test chime** plays one so you can set the volume beforehand.
