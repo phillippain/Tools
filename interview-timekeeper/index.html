@@ -1,0 +1,416 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="color-scheme" content="light dark">
+<style>html,body{margin:0}img{max-width:100%}[hidden]{display:none!important}</style>
+<title>Interview Timekeeper</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@100,500;100,700;100,800&family=Source+Sans+3:wght@400;600&display=swap">
+<style>
+/* Layout: one working screen for the teacher. Clock on top, the schedule running beneath it,
+   setup folded away in a panel. Everything derives from the fixed timetable. */
+:root {
+  --bg: #f3f5f6;
+  --surface: #ffffff;
+  --fg: #16232a;
+  --muted: #5f7079;
+  --line: #d6dde1;
+  --accent: #0f6f74;
+  --accent-ink: #ffffff;
+  --ok: #2e8b57;
+  --warn: #c7811a;
+  --over: #c0392b;
+  --ok-soft: #e4f3ea;
+  --warn-soft: #fbefdb;
+  --over-soft: #fbe3e0;
+  --display: "Archivo", "Helvetica Neue", Arial, sans-serif;
+  --body: "Source Sans 3", "Segoe UI", system-ui, sans-serif;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #101719; --surface: #1a2326; --fg: #eaf0f1; --muted: #93a4ab; --line: #2d3b40;
+    --accent: #4fb3b8; --accent-ink: #08191b;
+    --ok: #5cc98a; --warn: #e9a64a; --over: #ef6a5c;
+    --ok-soft: #173126; --warn-soft: #3a2a12; --over-soft: #3d1c19;
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #101719; --surface: #1a2326; --fg: #eaf0f1; --muted: #93a4ab; --line: #2d3b40;
+  --accent: #4fb3b8; --accent-ink: #08191b;
+  --ok: #5cc98a; --warn: #e9a64a; --over: #ef6a5c;
+  --ok-soft: #173126; --warn-soft: #3a2a12; --over-soft: #3d1c19;
+  color-scheme: dark;
+}
+* { box-sizing: border-box; }
+body {
+  background: var(--bg); color: var(--fg); font-family: var(--body); font-size: 16px; line-height: 1.45;
+  padding-left: max(16px, env(safe-area-inset-left, 0px));
+  padding-right: max(16px, env(safe-area-inset-right, 0px));
+  padding-block: 16px 40px;
+}
+.wrap { max-width: 760px; margin: 0 auto; display: grid; gap: 16px; }
+header { display: flex; justify-content: space-between; align-items: baseline; gap: 12px; flex-wrap: wrap; }
+h1 { font-family: var(--display); font-stretch: 100%; font-weight: 800; font-size: 1.25rem; margin: 0; letter-spacing: -0.01em; }
+.eyebrow { font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.08em; color: var(--muted); font-weight: 600; }
+button {
+  font: inherit; font-weight: 600; border: 1px solid var(--line); background: var(--surface); color: var(--fg);
+  border-radius: 8px; padding: 8px 14px; cursor: pointer;
+}
+button:focus-visible, input:focus-visible, textarea:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+button.primary { background: var(--accent); color: var(--accent-ink); border-color: var(--accent); }
+button.small { padding: 5px 10px; font-size: 0.875rem; }
+.toolbar { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
+
+/* Clock card: the one element set off as an object */
+.clock {
+  background: var(--surface); border: 1px solid var(--line); border-radius: 16px; padding: 20px;
+  display: grid; gap: 10px; border-top: 6px solid var(--ok); transition: border-color .3s, background .3s;
+}
+.clock.warn { border-top-color: var(--warn); }
+.clock.over { border-top-color: var(--over); background: var(--over-soft); }
+.clock.warn .time { color: var(--warn); }
+.clock.over .time { color: var(--over); }
+.clock .time {
+  font-family: var(--display); font-weight: 700; font-size: clamp(4.5rem, 22vw, 8.5rem); line-height: 1;
+  font-variant-numeric: tabular-nums; letter-spacing: -0.03em; color: var(--ok); transition: color .3s;
+}
+.clock .who { font-family: var(--display); font-weight: 700; font-size: clamp(1.5rem, 5vw, 2.2rem); line-height: 1.15; text-wrap: balance; }
+.clock .sub { font-size: 1.1rem; color: var(--muted); }
+.clock .meta { color: var(--muted); display: flex; gap: 16px; flex-wrap: wrap; font-variant-numeric: tabular-nums; }
+.bar { height: 8px; background: var(--line); border-radius: 4px; overflow: hidden; }
+.bar > i { display: block; height: 100%; width: 0; background: var(--ok); transition: width .25s linear, background .3s; }
+.clock.warn .bar > i { background: var(--warn); }
+.clock.over .bar > i { background: var(--over); width: 100% !important; }
+.next { display: flex; justify-content: space-between; gap: 12px; flex-wrap: wrap; border-top: 1px dashed var(--line); padding-top: 10px; }
+.next b { font-weight: 600; }
+.pulse { animation: pulse 1s ease-in-out infinite; }
+@keyframes pulse { 50% { opacity: .55; } }
+@media (prefers-reduced-motion: reduce) { .pulse { animation: none; } }
+
+/* Schedule list */
+.list { display: grid; }
+.row {
+  display: grid; grid-template-columns: 4.2rem 1fr auto; gap: 12px; align-items: center;
+  padding: 9px 10px; border-bottom: 1px solid var(--line); font-variant-numeric: tabular-nums; cursor: pointer; border-radius: 6px;
+}
+.row:hover { background: var(--surface); }
+.row .n { color: var(--muted); font-size: 0.9rem; }
+.row .name { min-width: 0; overflow-wrap: anywhere; }
+.row .name small { display: block; color: var(--muted); font-weight: 400; font-size: 0.85rem; }
+.row.done { color: var(--muted); }
+.row.done .name { text-decoration: line-through; }
+.row.current { background: var(--ok-soft); font-weight: 600; }
+.row.current.warn { background: var(--warn-soft); }
+.row.current.over { background: var(--over-soft); }
+.row.break .name { font-style: italic; color: var(--muted); }
+.chip { font-size: 0.75rem; text-transform: uppercase; letter-spacing: .06em; font-weight: 700; padding: 2px 8px; border-radius: 999px; background: var(--line); color: var(--muted); }
+.row.current .chip { background: var(--accent); color: var(--accent-ink); }
+
+/* Setup panel */
+details { background: var(--surface); border: 1px solid var(--line); border-radius: 12px; padding: 0 16px; }
+summary { padding: 12px 0; cursor: pointer; font-weight: 600; }
+.form { display: grid; gap: 14px; padding-bottom: 16px; }
+.fields { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 12px; }
+label { display: grid; gap: 4px; font-size: 0.875rem; font-weight: 600; color: var(--muted); }
+input, textarea { font: inherit; color: var(--fg); background: var(--bg); border: 1px solid var(--line); border-radius: 8px; padding: 8px 10px; width: 100%; }
+textarea { min-height: 180px; resize: vertical; line-height: 1.5; font-family: ui-monospace, Menlo, Consolas, monospace; font-size: 0.9rem; }
+.hint { font-size: 0.85rem; color: var(--muted); font-weight: 400; }
+.msg { font-size: 0.9rem; color: var(--muted); }
+.msg.bad { color: var(--over); }
+</style>
+
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <div>
+      <div class="eyebrow">Parent–teacher interviews</div>
+      <h1>Interview Timekeeper</h1>
+    </div>
+    <div class="toolbar">
+      <button class="small" id="muteBtn" type="button" aria-pressed="false">Sound on</button>
+      <button class="small" id="testBtn" type="button">Test chime</button>
+    </div>
+  </header>
+
+  <section class="clock" id="clock" aria-live="off">
+    <div class="eyebrow" id="slotLabel">Not started</div>
+    <div class="time" id="time">7:00</div>
+    <div class="bar" aria-hidden="true"><i id="fill"></i></div>
+    <div class="who" id="who">Paste your bookings below and press Start</div>
+    <div class="sub" id="sub"></div>
+    <div class="meta"><span id="window"></span><span id="wall"></span></div>
+    <div class="next"><span>Next: <b id="nextWho">—</b></span><span id="nextAt"></span></div>
+    <div class="toolbar">
+      <button class="primary" id="startAtBtn" type="button">Run to the timetable</button>
+      <button id="startNowBtn" type="button" title="Begin the first interview this instant and shift everything to match">Start first interview now</button>
+      <button id="reanchorBtn" type="button" title="Treat this moment as the start of the current slot">Restart this slot now</button>
+      <button id="minusBtn" type="button" title="Move every slot earlier">−1 min</button>
+      <button id="plusBtn" type="button" title="Move every slot later">+1 min</button>
+      <button id="stopBtn" type="button">Stop</button>
+    </div>
+    <div class="msg" id="msg"></div>
+  </section>
+
+  <section>
+    <div class="eyebrow" style="margin-bottom:6px">Schedule <span class="hint">(tap a row to jump to it)</span></div>
+    <div class="list" id="list"></div>
+  </section>
+
+  <details id="setup" open>
+    <summary>Set up the evening</summary>
+    <div class="form">
+      <label>Bookings, one per line: <b>date, time, subject, class, parent, student</b>
+        <span class="hint">Paste straight from your spreadsheet (commas or tabs). A header row is fine. Each booking runs from its own time for the slot length below, so gaps in the list become breaks. You can also just type student names, one per line, and they'll be timed from the fallback start time.</span>
+        <textarea id="names" spellcheck="false" placeholder="21/10/2026, 4:00 PM, Mathematics, 9MA2, Mr &amp; Mrs Khan, Aisha Khan"></textarea>
+      </label>
+      <div class="fields">
+        <label>Minutes per interview <input type="number" id="slotLen" value="7" min="1" max="60"></label>
+        <label>Warning chime with (min left) <input type="number" id="warnAt" value="1" min="0" max="59" step="0.5"></label>
+        <label>Fallback start time <span class="hint">(names-only lists)</span> <input type="time" id="startTime" value="16:00"></label>
+      </div>
+      <div class="toolbar">
+        <button class="primary" id="saveBtn" type="button">Save schedule</button>
+        <button id="exampleBtn" type="button">Load example</button>
+      </div>
+      <div class="msg" id="parseMsg"></div>
+    </div>
+  </details>
+</div>
+
+<script>
+(function () {
+  const $ = id => document.getElementById(id);
+  // A slot: { start (ms), end (ms), name, sub, isBreak }. Times are absolute; `offset` shifts them all.
+  const state = { slots: [], len: 7, warn: 1, running: false, offset: 0, startTime: "16:00", muted: false, chimed: {} };
+  let audio = null;
+
+  // ---------- persistence (per-browser convenience only) ----------
+  function save() { try { localStorage.setItem("itk2", JSON.stringify({
+    len: state.len, warn: state.warn, running: state.running, offset: state.offset, startTime: state.startTime,
+    muted: state.muted, names: $("names").value })); } catch (e) {} }
+  function load() { try {
+    const s = JSON.parse(localStorage.getItem("itk2") || "null"); if (!s) return;
+    $("names").value = s.names || ""; $("slotLen").value = s.len || 7; $("warnAt").value = s.warn ?? 1;
+    $("startTime").value = s.startTime || "16:00"; state.running = !!s.running; state.offset = s.offset || 0; state.muted = !!s.muted;
+  } catch (e) {} }
+
+  // ---------- parsing ----------
+  function parseDate(str) {
+    const s = str.trim(); const t = new Date();
+    let m;
+    if ((m = /^(\d{4})-(\d{1,2})-(\d{1,2})$/.exec(s))) return [+m[1], +m[2], +m[3]];
+    if ((m = /^(\d{1,2})[\/.\-](\d{1,2})[\/.\-](\d{2,4})$/.exec(s))) {      // day/month/year (Australian order)
+      let y = +m[3]; if (y < 100) y += 2000; return [y, +m[2], +m[1]];
+    }
+    const d = new Date(s); if (!isNaN(d)) return [d.getFullYear(), d.getMonth() + 1, d.getDate()];
+    return [t.getFullYear(), t.getMonth() + 1, t.getDate()];
+  }
+  function parseTime(str) {
+    const m = /^(\d{1,2})[:.h]?(\d{2})?\s*([ap]\.?m\.?)?$/i.exec(str.trim().replace(/\s+/g, " "));
+    if (!m) return null;
+    let h = +m[1], mi = +(m[2] || 0); const ap = (m[3] || "").toLowerCase();
+    if (ap.startsWith("p") && h < 12) h += 12; if (ap.startsWith("a") && h === 12) h = 0;
+    if (h > 23 || mi > 59) return null; return [h, mi];
+  }
+  function splitRow(line) {
+    if (line.includes("\t")) return line.split("\t").map(c => c.trim());
+    const cells = []; let cur = "", q = false;                                 // minimal CSV with quotes
+    for (const ch of line) {
+      if (ch === '"') { q = !q; } else if (ch === "," && !q) { cells.push(cur.trim()); cur = ""; } else cur += ch;
+    }
+    cells.push(cur.trim()); return cells;
+  }
+  function parseInput() {
+    const lines = $("names").value.split("\n").map(l => l.trim()).filter(Boolean);
+    const len = state.len * 60000, booked = [], plain = [];
+    let header = false;
+    for (const line of lines) {
+      const c = splitRow(line);
+      if (c.length >= 6) {
+        const ti = parseTime(c[1]);
+        if (!ti) { if (!header && /time/i.test(c[1])) { header = true; continue; } return { error: `Couldn't read the time in: "${line}"` }; }
+        const [y, mo, d] = parseDate(c[0]);
+        const start = new Date(y, mo - 1, d, ti[0], ti[1], 0, 0).getTime();
+        const extra = [c[2], c[3]].filter(Boolean).join(" · ");
+        booked.push({ start, end: start + len, name: c[5] || c[4] || "(unnamed)", sub: [c[4], extra].filter(Boolean).join(" — "), isBreak: false });
+      } else if (c.length === 1) {
+        const m = /^break\s*(\d+)?$/i.exec(line);
+        if (m) { for (let i = 0; i < +(m[1] || 1); i++) plain.push({ name: "Break", isBreak: true }); }
+        else plain.push({ name: line, isBreak: false });
+      } else return { error: `Expected 6 columns (date, time, subject, class, parent, student) but got ${c.length}: "${line}"` };
+    }
+    let slots;
+    if (booked.length) {
+      booked.sort((a, b) => a.start - b.start);
+      slots = [];
+      booked.forEach((b, i) => {
+        if (i) { const prev = slots[slots.length - 1]; if (b.start < prev.end) prev.end = b.start;      // overlapping: shorten
+          else if (b.start > prev.end) slots.push({ start: prev.end, end: b.start, name: "Break", sub: "", isBreak: true }); }
+        slots.push(b);
+      });
+      if (plain.length) return { error: "Mix of booking rows and plain names — use one or the other." };
+    } else {
+      const [h, m] = state.startTime.split(":").map(Number);
+      const t = new Date(); t.setHours(h, m, 0, 0); let cur = t.getTime();
+      slots = plain.map(p => { const s = { start: cur, end: cur + len, name: p.name, sub: "", isBreak: p.isBreak }; cur += len; return s; });
+    }
+    return { slots, booked: booked.length > 0 };
+  }
+  function applySetup() {
+    state.len = Math.max(1, parseFloat($("slotLen").value) || 7);
+    state.warn = Math.max(0, parseFloat($("warnAt").value) || 0);
+    state.startTime = $("startTime").value || "16:00";
+    const r = parseInput(); const pm = $("parseMsg");
+    if (r.error) { state.slots = []; pm.textContent = r.error; pm.className = "msg bad"; }
+    else { state.slots = r.slots; const n = r.slots.filter(s => !s.isBreak).length;
+      pm.textContent = n ? `${n} interview${n === 1 ? "" : "s"} read${r.booked ? " from bookings" : ""}, ${fmt(r.slots[0].start)} to ${fmt(r.slots[r.slots.length - 1].end)}.` : ""; pm.className = "msg"; }
+    save(); render();
+  }
+  const fmt = ts => new Date(ts).toLocaleTimeString([], { hour: "numeric", minute: "2-digit" });
+  function mmss(ms) {
+    const s = Math.ceil(Math.abs(ms) / 1000); const m = Math.floor(s / 60);
+    return (ms < 0 ? "+" : "") + m + ":" + String(s % 60).padStart(2, "0");
+  }
+  const st = i => state.slots[i].start + state.offset, en = i => state.slots[i].end + state.offset;
+  function currentIdx(now) {
+    if (!state.slots.length) return -1;
+    if (now < st(0)) return -1;
+    for (let i = 0; i < state.slots.length; i++) if (now < en(i)) return i;
+    return state.slots.length;
+  }
+
+  // ---------- sound: gentle sine chimes ----------
+  function ensureAudio() { if (!audio) { try { audio = new (window.AudioContext || window.webkitAudioContext)(); } catch (e) {} }
+    if (audio && audio.state === "suspended") audio.resume(); }
+  function chime(kind) {
+    if (state.muted) return; ensureAudio(); if (!audio) return;
+    const notes = kind === "end" ? [659, 523, 392] : [523, 659];
+    const t0 = audio.currentTime;
+    notes.forEach((f, i) => {
+      const o = audio.createOscillator(), g = audio.createGain();
+      o.type = "sine"; o.frequency.value = f;
+      g.gain.setValueAtTime(0.0001, t0 + i * 0.35);
+      g.gain.exponentialRampToValueAtTime(0.18, t0 + i * 0.35 + 0.03);
+      g.gain.exponentialRampToValueAtTime(0.0001, t0 + i * 0.35 + 0.9);
+      o.connect(g).connect(audio.destination);
+      o.start(t0 + i * 0.35); o.stop(t0 + i * 0.35 + 1);
+    });
+  }
+
+  // ---------- rendering ----------
+  let lastIdx = null;
+  function render() {
+    const now = Date.now(), n = state.slots.length, clock = $("clock");
+    const idx = state.running ? currentIdx(now) : null; lastIdx = idx;
+    const list = $("list"); list.innerHTML = "";
+    state.slots.forEach((s, i) => {
+      const row = document.createElement("div");
+      const status = idx === null ? "" : i < idx ? "done" : i === idx ? "current" : "";
+      row.className = "row" + (s.isBreak ? " break" : "") + (status ? " " + status : "");
+      row.innerHTML = `<span class="n">${fmt(st(i))}</span><span class="name"></span><span class="chip">${status === "current" ? "Now" : status === "done" ? "Done" : s.isBreak ? "Gap" : "#" + (state.slots.slice(0, i + 1).filter(x => !x.isBreak).length)}</span>`;
+      const nm = row.querySelector(".name"); nm.textContent = s.name;
+      if (s.sub) { const sm = document.createElement("small"); sm.textContent = s.sub; nm.appendChild(sm); }
+      row.title = "Jump to this slot";
+      row.addEventListener("click", () => { ensureAudio(); state.offset = Date.now() - s.start; state.running = true; state.chimed = {}; $("setup").open = false; save(); render(); wake(); });
+      list.appendChild(row);
+    });
+    if (!n) { $("who").textContent = "Paste your bookings below and press Start"; $("sub").textContent = ""; $("slotLabel").textContent = "No schedule yet"; $("window").textContent = ""; clock.className = "clock"; }
+    tick();
+  }
+
+  function tick() {
+    const now = Date.now(), n = state.slots.length, clock = $("clock");
+    $("wall").textContent = "Now " + fmt(now);
+    if (!n) return;
+    if (!state.running) {
+      const c = state.slots.filter(s => !s.isBreak).length;
+      $("slotLabel").textContent = "Ready · " + c + " interviews · " + state.len + " min each";
+      $("time").textContent = mmss(state.len * 60000); $("fill").style.width = "0";
+      const f = state.slots[0]; $("who").textContent = f.name; $("sub").textContent = f.sub;
+      $("window").textContent = "Timetable " + fmt(f.start) + " – " + fmt(state.slots[n - 1].end);
+      $("nextWho").textContent = state.slots[1] ? state.slots[1].name : "—"; $("nextAt").textContent = "";
+      clock.className = "clock"; $("time").classList.remove("pulse"); return;
+    }
+    const idx = currentIdx(now);
+    if (idx !== lastIdx) { render(); return; }
+    if (idx < 0) {
+      $("slotLabel").textContent = "Starts in"; $("time").textContent = mmss(st(0) - now);
+      $("who").textContent = state.slots[0].name; $("sub").textContent = state.slots[0].sub; $("window").textContent = "First slot " + fmt(st(0));
+      $("nextWho").textContent = state.slots[1] ? state.slots[1].name : "—"; $("nextAt").textContent = "";
+      $("fill").style.width = "0"; clock.className = "clock"; return;
+    }
+    if (idx >= n) {
+      $("slotLabel").textContent = "All done"; $("time").textContent = "0:00"; $("fill").style.width = "100%";
+      $("who").textContent = "Interviews finished"; $("sub").textContent = ""; $("window").textContent = "Ended " + fmt(en(n - 1));
+      $("nextWho").textContent = "—"; $("nextAt").textContent = ""; clock.className = "clock"; $("time").classList.remove("pulse");
+      if (!state.chimed.fin) { state.chimed.fin = true; chime("end"); }
+      return;
+    }
+    const s = state.slots[idx], start = st(idx), end = en(idx), left = end - now, dur = end - start, frac = 1 - left / dur;
+    const warnMs = state.warn * 60000;
+    const phase = left <= 0 ? "over" : (left <= warnMs && !s.isBreak) ? "warn" : "";
+    const num = state.slots.slice(0, idx + 1).filter(x => !x.isBreak).length, total = state.slots.filter(x => !x.isBreak).length;
+    $("slotLabel").textContent = (s.isBreak ? "Break" : "Interview " + num + " of " + total) + " · ends " + fmt(end);
+    $("time").textContent = mmss(left); $("time").classList.toggle("pulse", phase === "warn");
+    $("fill").style.width = Math.max(0, Math.min(100, frac * 100)) + "%";
+    $("who").textContent = s.name; $("sub").textContent = s.sub;
+    $("window").textContent = fmt(start) + " – " + fmt(end);
+    const nx = state.slots[idx + 1];
+    $("nextWho").textContent = nx ? nx.name : "Finish"; $("nextAt").textContent = "at " + fmt(end);
+    clock.className = "clock" + (phase ? " " + phase : "");
+    const row = $("list").children[idx];
+    if (row) { row.classList.toggle("warn", phase === "warn"); row.classList.toggle("over", phase === "over"); }
+    if (phase === "warn" && warnMs > 0 && !state.chimed[idx + ":w"]) { state.chimed[idx + ":w"] = true; chime("warn"); }
+    if (idx > 0 && !state.slots[idx - 1].isBreak && !state.chimed[(idx - 1) + ":e"] && now - start < 5000) { state.chimed[(idx - 1) + ":e"] = true; chime("end"); }
+  }
+
+  // ---------- controls ----------
+  function begin(offset) {
+    applySetup(); if (!state.slots.length) { $("msg").textContent = "Add your bookings first."; return; }
+    ensureAudio(); state.running = true; state.offset = offset; state.chimed = {}; $("setup").open = false; $("msg").textContent = "";
+    save(); render(); wake();
+  }
+  $("startAtBtn").addEventListener("click", () => begin(0));
+  $("startNowBtn").addEventListener("click", () => { applySetup(); if (state.slots.length) begin(Date.now() - state.slots[0].start); });
+  $("reanchorBtn").addEventListener("click", () => {
+    if (!state.running) return; const idx = Math.max(0, Math.min(state.slots.length - 1, currentIdx(Date.now())));
+    state.offset = Date.now() - state.slots[idx].start; state.chimed = {}; save(); render();
+  });
+  $("plusBtn").addEventListener("click", () => { if (state.running) { state.offset += 60000; save(); render(); } });
+  $("minusBtn").addEventListener("click", () => { if (state.running) { state.offset -= 60000; save(); render(); } });
+  $("stopBtn").addEventListener("click", () => { state.running = false; state.offset = 0; state.chimed = {}; save(); render(); });
+  $("saveBtn").addEventListener("click", () => { applySetup(); });
+  $("exampleBtn").addEventListener("click", () => {
+    const d = new Date(), ds = String(d.getDate()).padStart(2, "0") + "/" + String(d.getMonth() + 1).padStart(2, "0") + "/" + d.getFullYear();
+    $("names").value = [
+      "Date, Time, Subject, Class, Parent, Student",
+      `${ds}, 4:00 PM, Mathematics, 9MA2, Mr & Mrs Khan, Aisha Khan`,
+      `${ds}, 4:07 PM, Mathematics, 9MA2, Siobhan O'Brien, Liam O'Brien`,
+      `${ds}, 4:14 PM, Science, 10SC1, Kenji Tanaka, Mei Tanaka`,
+      `${ds}, 4:28 PM, Science, 10SC1, Lucía Herrera, Tomás Herrera`,
+      `${ds}, 4:35 PM, Mathematics, 9MA2, Raj & Anita Patel, Priya Patel`].join("\n");
+    applySetup(); $("parseMsg").textContent += " These are example names; replace them with your own list.";
+  });
+  $("muteBtn").addEventListener("click", () => {
+    state.muted = !state.muted; $("muteBtn").textContent = state.muted ? "Sound off" : "Sound on";
+    $("muteBtn").setAttribute("aria-pressed", String(state.muted)); save();
+  });
+  $("testBtn").addEventListener("click", () => { const m = state.muted; state.muted = false; chime("end"); state.muted = m; });
+
+  let lock = null;
+  async function wake() { try { if ("wakeLock" in navigator && !lock) { lock = await navigator.wakeLock.request("screen"); lock.addEventListener("release", () => { lock = null; }); } } catch (e) {} }
+  document.addEventListener("visibilitychange", () => { if (document.visibilityState === "visible" && state.running) wake(); });
+
+  load();
+  $("muteBtn").textContent = state.muted ? "Sound off" : "Sound on";
+  if (!$("names").value.trim()) { $("exampleBtn").click(); } else { applySetup(); }
+  if (state.running) $("setup").open = false;
+  setInterval(tick, 250);
+})();
+</script>
+
+</body>
+</html>
