@@ -1,0 +1,70 @@
+<!doctype html>
+<html lang="en-AU">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="color-scheme" content="light dark">
+  <title>Tools</title>
+  <style>
+    :root {
+      color-scheme: light dark;
+      --bg: #f6f7f9;
+      --card: #ffffff;
+      --ink: #14213d;
+      --soft: #4a5568;
+      --line: #d9dee7;
+      --brand: #1d4ed8;
+      font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+      line-height: 1.5;
+    }
+    @media (prefers-color-scheme: dark) {
+      :root {
+        --bg: #0f1420;
+        --card: #171e2d;
+        --ink: #e8edf5;
+        --soft: #a9b4c6;
+        --line: #2a3345;
+        --brand: #8fb3ff;
+      }
+    }
+    body { margin: 0; background: var(--bg); color: var(--ink); }
+    main { max-width: 40rem; margin: 0 auto; padding: 2.5rem 1.25rem 3rem; }
+    h1 { font-size: 1.75rem; margin: 0 0 0.25rem; }
+    .lede { color: var(--soft); margin: 0 0 1.5rem; }
+    ul { list-style: none; margin: 0; padding: 0; display: grid; gap: 0.75rem; }
+    a.tool {
+      display: block;
+      padding: 1rem 1.1rem;
+      background: var(--card);
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      color: inherit;
+      text-decoration: none;
+    }
+    a.tool:hover { border-color: var(--brand); }
+    a.tool:focus-visible { outline: 3px solid var(--brand); outline-offset: 2px; }
+    .name { display: block; font-size: 1.1rem; font-weight: 600; color: var(--brand); }
+    .desc { display: block; margin-top: 0.15rem; color: var(--soft); }
+  </style>
+</head>
+<body>
+  <main>
+    <h1>Tools</h1>
+    <p class="lede">Small tools for teaching and school events.</p>
+    <ul>
+      <li>
+        <a class="tool" href="lesson-register/">
+          <span class="name">Lesson Register</span>
+          <span class="desc">Record what was taught each lesson against the program, with adjustments, resources and syllabus coverage.</span>
+        </a>
+      </li>
+      <li>
+        <a class="tool" href="interview-timekeeper/">
+          <span class="name">Interview Timekeeper</span>
+          <span class="desc">Keeps parent–teacher interviews on a fixed timetable, with a chime before each slot ends.</span>
+        </a>
+      </li>
+    </ul>
+  </main>
+</body>
+</html>
