@@ -1,0 +1,246 @@
+<!DOCTYPE html>
+<html lang="en-AU">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>SEP Evidence Upload Tracker 2026</title>
+<style>
+:root{--bg:#f6f7f9;--card:#fff;--ink:#1c2430;--mute:#5d6877;--line:#dde2e9;--accent:#1f4e8c;--ok:#1b7f4b;--okbg:#e6f5ec;--warn:#b45309;--n:#7a3e9d;--r:#0f766e}
+*{box-sizing:border-box}
+body{margin:0;font:15px/1.45 system-ui,-apple-system,Segoe UI,Roboto,sans-serif;background:var(--bg);color:var(--ink)}
+header{background:var(--accent);color:#fff;padding:16px 16px 14px}
+header h1{margin:0;font-size:19px}
+header p{margin:4px 0 10px;font-size:13px;opacity:.9}
+.bar{height:10px;background:rgba(255,255,255,.25);border-radius:6px;overflow:hidden}
+.bar>i{display:block;height:100%;background:#7ee2a8;width:0;transition:width .3s}
+.bartxt{font-size:13px;margin-top:6px}
+main{max-width:900px;margin:0 auto;padding:12px}
+.panel{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:10px 12px;margin-bottom:12px}
+.row{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+label.l{font-size:12px;color:var(--mute);display:block;margin-bottom:2px}
+select,input[type=search],input[type=text],input[type=url]{font:inherit;padding:8px;border:1px solid var(--line);border-radius:8px;background:#fff;min-width:0}
+input[type=search]{flex:1;min-width:140px}
+.chips{display:flex;flex-wrap:wrap;gap:6px}
+.chip{border:1px solid var(--line);background:#fff;border-radius:999px;padding:6px 12px;font:inherit;font-size:13px;cursor:pointer}
+.chip.on{background:var(--accent);border-color:var(--accent);color:#fff}
+.teams{display:grid;grid-template-columns:repeat(auto-fill,minmax(130px,1fr));gap:8px}
+.team{border:1px solid var(--line);border-radius:8px;padding:8px;background:#fff;text-align:left;font:inherit;cursor:pointer}
+.team.on{outline:2px solid var(--accent)}
+.team b{display:block;font-size:13px}
+.team span{font-size:12px;color:var(--mute)}
+.mini{height:5px;background:var(--line);border-radius:4px;margin-top:5px;overflow:hidden}
+.mini>i{display:block;height:100%;background:var(--ok)}
+.item{background:var(--card);border:1px solid var(--line);border-left:4px solid var(--line);border-radius:10px;padding:10px 12px;margin-bottom:8px;display:flex;gap:10px}
+.item.done{background:var(--okbg);border-left-color:var(--ok)}
+.item.N{border-left-color:var(--n)}.item.R{border-left-color:var(--r)}.item.done{border-left-color:var(--ok)}
+.tick{flex:none;width:30px;height:30px;accent-color:var(--ok);cursor:pointer;margin-top:2px}
+.body{flex:1;min-width:0}
+.title{font-weight:600}
+.meta{display:flex;flex-wrap:wrap;gap:6px;margin:3px 0;font-size:12px}
+.b{border-radius:5px;padding:1px 7px;background:#eef1f5;color:var(--mute)}
+.b.N{background:#f1e6f7;color:var(--n)}.b.R{background:#d9f1ee;color:var(--r)}
+.art{font-size:14px;margin:4px 0}
+.art b{font-weight:600}
+details{font-size:13px;color:var(--mute);margin-top:4px}
+details p{margin:4px 0}
+.by{font-size:12px;color:var(--ok);margin-top:4px}
+.note{width:100%;margin-top:6px;font-size:13px}
+.empty,.msg{text-align:center;color:var(--mute);padding:24px 8px}
+.msg.err{color:var(--warn)}
+.fold{font-size:13px;display:flex;gap:6px;flex-wrap:wrap;align-items:center}
+.fold a{color:var(--accent)}
+button.sm{font:inherit;font-size:12px;padding:4px 10px;border:1px solid var(--line);border-radius:6px;background:#fff;cursor:pointer}
+</style>
+</head>
+<body>
+<header>
+  <h1>SEP Evidence Upload Tracker 2026</h1>
+  <p>Numeracy and reading evidence · tick an item once it is uploaded to your team's folder</p>
+  <div class="bar"><i id="bar"></i></div>
+  <div class="bartxt" id="bartxt">Loading…</div>
+</header>
+<main>
+  <div id="status" class="msg" hidden></div>
+
+  <div class="panel">
+    <label class="l">Your team</label>
+    <div class="teams" id="teams"></div>
+    <div class="fold" id="fold" style="margin-top:8px"></div>
+  </div>
+
+  <div class="panel">
+    <div class="row" style="margin-bottom:8px">
+      <div class="chips" id="goalChips"></div>
+      <div class="chips" id="statusChips"></div>
+    </div>
+    <div class="row">
+      <select id="year" aria-label="Year"><option value="all">All years</option><option>Year 11</option><option>Year 12</option></select>
+      <input type="search" id="q" placeholder="Search course, task or artefact">
+    </div>
+  </div>
+
+  <div id="list"></div>
+  <p class="msg" style="font-size:12px">Numeracy rows cover Year 12 courses; reading rows cover Years 11 and 12. Please upload de-identified student work only.</p>
+</main>
+
+<script>
+(function(){
+var items=[], ticks={}, folders={}, names={}, db=null, user=null, myId=null, canWrite=true;
+var F={goal:'all',team:'all',status:'all',year:'all',q:''};
+var $=function(i){return document.getElementById(i)};
+function el(t,c,x){var e=document.createElement(t);if(c)e.className=c;if(x!=null)e.textContent=x;return e}
+function store(k,v){try{if(v===undefined)return localStorage.getItem(k);localStorage.setItem(k,v)}catch(e){return null}}
+function showStatus(t,err){var s=$('status');s.hidden=!t;s.textContent=t||'';s.className='msg'+(err?' err':'')}
+
+F.team=store('sep-team')||'all';
+
+fetch('data.json').then(function(r){return r.json()}).then(function(d){items=d;init()}).catch(function(){showStatus('Could not load the evidence list.',true)});
+
+function init(){
+  render();
+  claude.use('db').then(function(d){
+    db=d;
+    if(!db){showStatus('Sign in to Claude to tick items. You can still browse the list.',true);return}
+    var done=false;
+    var t=setTimeout(function(){if(!done)showStatus('Ticks are taking a while to load…',true)},10000);
+    db.collection('ticks').onSnapshot(function(snap){
+      done=true;clearTimeout(t);showStatus('');
+      ticks={};
+      snap.forEach?snap.forEach(function(doc){ticks[doc.id]=doc.data()}):(snap.docs||[]).forEach(function(doc){ticks[doc.id]=doc.data()});
+      resolveNames().then(render);
+    },function(){done=true;clearTimeout(t);showStatus('Could not load saved ticks.',true)});
+    db.collection('folders').onSnapshot(function(snap){
+      folders={};
+      snap.forEach?snap.forEach(function(doc){folders[doc.id]=doc.data()}):(snap.docs||[]).forEach(function(doc){folders[doc.id]=doc.data()});
+      render();
+    },function(){});
+  });
+  claude.use('user').then(function(u){user=u;if(u&&u.id)u.id().then(function(i){myId=i})});
+}
+
+function resolveNames(){
+  if(!user||!user.profiles)return Promise.resolve();
+  var ids={};Object.keys(ticks).forEach(function(k){if(ticks[k]&&ticks[k].by)ids[ticks[k].by]=1});
+  var list=Object.keys(ids);if(!list.length)return Promise.resolve();
+  return user.profiles(list).then(function(p){list.forEach(function(i){names[i]=(p&&p[i]&&p[i].name)||''})}).catch(function(){});
+}
+
+function isDone(id){return !!(ticks[id]&&ticks[id].done)}
+function teams(){var o=[],s={};items.forEach(function(i){if(!s[i.team]){s[i.team]=1;o.push(i.team)}});o.sort(function(a,b){return a==='Whole school'?1:b==='Whole school'?-1:a.localeCompare(b)});return o}
+function vis(i,ignoreTeam){
+  if(F.goal!=='all'&&i.goal!==F.goal)return false;
+  if(!ignoreTeam&&F.team!=='all'&&i.team!==F.team)return false;
+  if(F.year!=='all'&&i.year&&i.year!==F.year)return false;
+  if(F.status==='todo'&&isDone(i.id))return false;
+  if(F.status==='done'&&!isDone(i.id))return false;
+  if(F.q){var h=(i.title+' '+i.task+' '+i.artefact+' '+i.demand+' '+i.team).toLowerCase();if(h.indexOf(F.q.toLowerCase())<0)return false}
+  return true;
+}
+
+function render(){
+  var d=items.filter(function(i){return isDone(i.id)}).length;
+  $('bar').style.width=(items.length?d/items.length*100:0)+'%';
+  $('bartxt').textContent=d+' of '+items.length+' items uploaded ('+Math.round(items.length?d/items.length*100:0)+'%)';
+
+  var tw=$('teams');tw.textContent='';
+  var all=el('button','team'+(F.team==='all'?' on':''));all.appendChild(el('b',null,'All teams'));all.appendChild(el('span',null,d+' / '+items.length));
+  all.onclick=function(){setTeam('all')};tw.appendChild(all);
+  teams().forEach(function(t){
+    var its=items.filter(function(i){return i.team===t&&(F.goal==='all'||i.goal===F.goal)});
+    var dn=its.filter(function(i){return isDone(i.id)}).length;
+    var b=el('button','team'+(F.team===t?' on':''));b.appendChild(el('b',null,t));b.appendChild(el('span',null,dn+' / '+its.length));
+    var m=el('div','mini'),f=el('i');f.style.width=(its.length?dn/its.length*100:0)+'%';m.appendChild(f);b.appendChild(m);
+    b.onclick=function(){setTeam(t)};tw.appendChild(b);
+  });
+
+  var fo=$('fold');fo.textContent='';
+  if(F.team!=='all'){
+    fo.appendChild(el('span',null,F.team+' folder: '));
+    var u=folders[fk(F.team)]&&folders[fk(F.team)].url;
+    if(u&&/^https:\/\//.test(u)){var a=el('a',null,'Open team folder');a.href=u;a.target='_blank';a.rel='noopener';fo.appendChild(a)}
+    else fo.appendChild(el('span',null,'link not set yet'));
+    if(db){var sb=el('button','sm',u?'Change link':'Set link');sb.onclick=function(){setFolder(F.team,u)};fo.appendChild(sb)}
+  }
+
+  chips('goalChips',[['all','Numeracy + Reading'],['N','Numeracy'],['R','Reading']],'goal');
+  chips('statusChips',[['all','All'],['todo','To upload'],['done','Uploaded']],'status');
+  $('year').value=F.year;
+
+  var L=$('list');L.textContent='';
+  var shown=items.filter(function(i){return vis(i)});
+  if(!shown.length){L.appendChild(el('div','empty','Nothing matches these filters.'));return}
+  shown.forEach(function(i){L.appendChild(card(i))});
+}
+
+function chips(id,opts,key){
+  var w=$(id);w.textContent='';
+  opts.forEach(function(o){var c=el('button','chip'+(F[key]===o[0]?' on':''),o[1]);c.onclick=function(){F[key]=o[0];render()};w.appendChild(c)});
+}
+function setTeam(t){F.team=t;store('sep-team',t);render()}
+
+function setFolder(team,cur){
+  var box=$('fold');box.textContent='';
+  var inp=el('input');inp.type='url';inp.placeholder='https://… link to team folder';inp.value=cur||'';inp.style.flex='1';
+  var ok=el('button','sm','Save'),no=el('button','sm','Cancel');
+  ok.onclick=function(){
+    var v=inp.value.trim();
+    if(v&&!/^https:\/\//.test(v)){inp.style.borderColor='#b45309';return}
+    db.doc('folders/'+fk(team)).set({team:team,url:v}).then(render,function(){showStatus('You do not have permission to change this.',true)});
+  };
+  no.onclick=render;
+  box.appendChild(inp);box.appendChild(ok);box.appendChild(no);
+}
+function fk(t){return t.replace(/[^A-Za-z0-9]/g,'_')}
+
+function card(i){
+  var t=ticks[i.id]||{},done=!!t.done;
+  var c=el('div','item '+i.goal+(done?' done':''));
+  var cb=el('input','tick');cb.type='checkbox';cb.checked=done;cb.setAttribute('aria-label','Uploaded: '+i.title);
+  cb.onchange=function(){toggle(i,cb.checked,cb)};
+  c.appendChild(cb);
+  var b=el('div','body');
+  b.appendChild(el('div','title',i.title));
+  var m=el('div','meta');
+  m.appendChild(el('span','b '+i.goal,i.goal==='N'?'Numeracy':'Reading'));
+  m.appendChild(el('span','b',i.team));
+  if(i.year)m.appendChild(el('span','b',i.year));
+  if(i.etype)m.appendChild(el('span','b',i.etype));
+  if(i.due)m.appendChild(el('span','b','Due: '+i.due));
+  b.appendChild(m);
+  var a=el('div','art');a.appendChild(el('b',null,'Upload: '));a.appendChild(document.createTextNode(i.artefact));b.appendChild(a);
+  if(i.task){var tk=el('div','art');tk.appendChild(el('b',null,'Task: '));tk.appendChild(document.createTextNode(i.task));b.appendChild(tk)}
+  var dt=el('details');dt.appendChild(el('summary',null,'Why it matters'));
+  if(i.demand)dt.appendChild(el('p',null,i.demand));
+  if(i.why)dt.appendChild(el('p',null,i.why));
+  if(i.ht)dt.appendChild(el('p',null,'Owner: '+i.ht));
+  b.appendChild(dt);
+  if(done){
+    var who=(t.by&&names[t.by])||'a colleague';
+    var when=t.at?new Date(t.at).toLocaleDateString('en-AU',{day:'numeric',month:'short',year:'numeric'}):'';
+    b.appendChild(el('div','by','Uploaded by '+who+(when?' on '+when:'')+(t.note?' — '+t.note:'')));
+  }
+  if(db){
+    var n=el('input','note');n.type='text';n.placeholder='Optional note (e.g. file name or sub-folder)';n.value=t.note||'';n.maxLength=200;
+    n.onchange=function(){if(isDone(i.id))save(i,true,n.value.trim())};
+    if(done)b.appendChild(n);
+  }
+  c.appendChild(b);return c;
+}
+
+function toggle(i,on,cb){
+  if(!db){cb.checked=!on;showStatus('Sign in to Claude to tick items.',true);return}
+  save(i,on,'',cb);
+}
+function save(i,on,note,cb){
+  var ref=db.doc('ticks/'+i.id);
+  var data=on?{done:true,by:myId||'',at:new Date().toISOString(),note:note||(ticks[i.id]&&ticks[i.id].note)||'',team:i.team,goal:i.goal}
+             :{done:false,by:'',at:'',note:'',team:i.team,goal:i.goal};
+  if(on&&ticks[i.id]&&ticks[i.id].done){data.by=ticks[i.id].by;data.at=ticks[i.id].at;data.note=note}
+  ref.set(data).catch(function(){if(cb)cb.checked=!on;showStatus('Could not save. You may only have view access.',true)});
+}
+$('q').oninput=function(){F.q=this.value;render()};
+$('year').onchange=function(){F.year=this.value;render()};
+})();
+</script>
+</body>
+</html>
