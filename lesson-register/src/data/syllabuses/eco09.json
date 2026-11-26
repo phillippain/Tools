@@ -1,0 +1,183 @@
+{
+  "id": "eco09",
+  "subject": "Economics",
+  "title": "Economics Stage 6 Syllabus (2009)",
+  "shortTitle": "Economics (2009)",
+  "officialUrl": "https://www.nsw.gov.au/education-and-training/nesa/curriculum/hsie/economics-stage-6-2009",
+  "note": "Short labels for tracking, written from the 2027 Topics 3 and 4 program. They are not the syllabus wording: check them against the official syllabus. Topics 1 and 2 are added when their programs are loaded.",
+  "courses": [
+    {
+      "id": "eco09.hsc",
+      "title": "HSC course (Year 12)",
+      "outcomes": [
+        { "id": "eco09.hsc.H1", "code": "H1", "label": "Economic terms, concepts and relationships" },
+        { "id": "eco09.hsc.H2", "code": "H2", "label": "Economic role of individuals, firms, institutions and government" },
+        { "id": "eco09.hsc.H3", "code": "H3", "label": "Role of markets in the global economy" },
+        { "id": "eco09.hsc.H4", "code": "H4", "label": "Impact of global markets on economies" },
+        { "id": "eco09.hsc.H5", "code": "H5", "label": "Policy options for economic problems and issues" },
+        { "id": "eco09.hsc.H6", "code": "H6", "label": "Impact of economic policies in Australian contexts" },
+        { "id": "eco09.hsc.H7", "code": "H7", "label": "Consequences of contemporary economic problems" },
+        { "id": "eco09.hsc.H8", "code": "H8", "label": "Applying terms, concepts and theories" },
+        { "id": "eco09.hsc.H9", "code": "H9", "label": "Selecting and organising information from sources" },
+        { "id": "eco09.hsc.H10", "code": "H10", "label": "Communicating economic information and ideas" },
+        { "id": "eco09.hsc.H11", "code": "H11", "label": "Applying mathematical concepts" },
+        { "id": "eco09.hsc.H12", "code": "H12", "label": "Working independently and in groups to timelines" }
+      ],
+      "areas": [
+        { "id": "eco09.hsc.t1", "code": "Topic 1", "title": "The Global Economy", "groups": [] },
+        { "id": "eco09.hsc.t2", "code": "Topic 2", "title": "Australia's Place in the Global Economy", "groups": [] },
+        {
+          "id": "eco09.hsc.t3",
+          "code": "Topic 3",
+          "title": "Economic Issues",
+          "groups": [
+            {
+              "id": "eco09.hsc.t3.growth",
+              "title": "Economic growth",
+              "points": [
+                { "id": "eco09.hsc.t3.growth.1", "label": "Aggregate demand, injections and withdrawals, equilibrium and the simple multiplier" },
+                { "id": "eco09.hsc.t3.growth.2", "label": "Measuring growth with real GDP; the business cycle and its trends" },
+                { "id": "eco09.hsc.t3.growth.3", "label": "Sources of growth, including increases in aggregate supply" },
+                { "id": "eco09.hsc.t3.growth.4", "label": "Effects of growth; arguments for and against higher growth" }
+              ]
+            },
+            {
+              "id": "eco09.hsc.t3.unemp",
+              "title": "Unemployment",
+              "points": [
+                { "id": "eco09.hsc.t3.unemp.1", "label": "Labour force measures: participation and unemployment rates" },
+                { "id": "eco09.hsc.t3.unemp.2", "label": "Unemployment trends" },
+                { "id": "eco09.hsc.t3.unemp.3", "label": "Types and causes of unemployment, including NAIRU" },
+                { "id": "eco09.hsc.t3.unemp.4", "label": "Groups affected; economic and social costs" }
+              ]
+            },
+            {
+              "id": "eco09.hsc.t3.infl",
+              "title": "Inflation",
+              "points": [
+                { "id": "eco09.hsc.t3.infl.1", "label": "Measuring inflation: headline and underlying" },
+                { "id": "eco09.hsc.t3.infl.2", "label": "Inflation trends" },
+                { "id": "eco09.hsc.t3.infl.3", "label": "Causes: demand, cost, imported inflation and expectations" },
+                { "id": "eco09.hsc.t3.infl.4", "label": "Effects of inflation" }
+              ]
+            },
+            {
+              "id": "eco09.hsc.t3.ext",
+              "title": "External stability",
+              "points": [
+                { "id": "eco09.hsc.t3.ext.1", "label": "Current account deficit, net foreign debt and net foreign liabilities" },
+                { "id": "eco09.hsc.t3.ext.2", "label": "Terms of trade, exchange rate and international competitiveness" },
+                { "id": "eco09.hsc.t3.ext.3", "label": "Trends, causes and effects of a continued CAD" }
+              ]
+            },
+            {
+              "id": "eco09.hsc.t3.dist",
+              "title": "Distribution of income and wealth",
+              "points": [
+                { "id": "eco09.hsc.t3.dist.1", "label": "Measuring inequality: Lorenz curve and Gini coefficient" },
+                { "id": "eco09.hsc.t3.dist.2", "label": "Sources of income and wealth; taxation, transfers and assistance" },
+                { "id": "eco09.hsc.t3.dist.3", "label": "Dimensions and trends: gender, age, occupation, ethnic background, family structure" },
+                { "id": "eco09.hsc.t3.dist.4", "label": "Economic and social costs and benefits of inequality" }
+              ]
+            },
+            {
+              "id": "eco09.hsc.t3.env",
+              "title": "Environmental sustainability",
+              "points": [
+                { "id": "eco09.hsc.t3.env.1", "label": "Ecologically sustainable development" },
+                { "id": "eco09.hsc.t3.env.2", "label": "Private and social costs and benefits; externalities and market failure" },
+                { "id": "eco09.hsc.t3.env.3", "label": "Public goods and free riders" },
+                { "id": "eco09.hsc.t3.env.4", "label": "Pollution, climate change and resource depletion" }
+              ]
+            },
+            {
+              "id": "eco09.hsc.t3.skills",
+              "title": "Skills",
+              "points": [
+                { "id": "eco09.hsc.t3.skills.1", "label": "Calculate equilibrium with injections and withdrawals, and the multiplier", "skill": true },
+                { "id": "eco09.hsc.t3.skills.2", "label": "Calculate unemployment and participation rates", "skill": true },
+                { "id": "eco09.hsc.t3.skills.3", "label": "Calculate and interpret external stability ratios and the terms of trade", "skill": true },
+                { "id": "eco09.hsc.t3.skills.4", "label": "Interpret a Lorenz curve and Gini coefficient", "skill": true },
+                { "id": "eco09.hsc.t3.skills.5", "label": "Analyse problems facing contemporary and hypothetical economies", "skill": true }
+              ]
+            }
+          ]
+        },
+        {
+          "id": "eco09.hsc.t4",
+          "code": "Topic 4",
+          "title": "Economic Policies and Management",
+          "groups": [
+            {
+              "id": "eco09.hsc.t4.obj",
+              "title": "Objectives and the case for policy",
+              "points": [
+                { "id": "eco09.hsc.t4.obj.1", "label": "The economic objectives of government" },
+                { "id": "eco09.hsc.t4.obj.2", "label": "Conflicts among objectives" },
+                { "id": "eco09.hsc.t4.obj.3", "label": "Rationale for macroeconomic and microeconomic policy" }
+              ]
+            },
+            {
+              "id": "eco09.hsc.t4.fiscal",
+              "title": "Fiscal policy",
+              "points": [
+                { "id": "eco09.hsc.t4.fiscal.1", "label": "Budgets, budget outcomes and fiscal stance" },
+                { "id": "eco09.hsc.t4.fiscal.2", "label": "Effects on resource use, income distribution and activity" },
+                { "id": "eco09.hsc.t4.fiscal.3", "label": "Financing deficits and using surpluses" }
+              ]
+            },
+            {
+              "id": "eco09.hsc.t4.monetary",
+              "title": "Monetary policy",
+              "points": [
+                { "id": "eco09.hsc.t4.monetary.1", "label": "Purpose of monetary policy and how the RBA implements it" },
+                { "id": "eco09.hsc.t4.monetary.2", "label": "Effects of interest rates on activity and the exchange rate" }
+              ]
+            },
+            {
+              "id": "eco09.hsc.t4.micro",
+              "title": "Microeconomic policy",
+              "points": [
+                { "id": "eco09.hsc.t4.micro.1", "label": "Rationale for microeconomic policy and its effect on efficiency" },
+                { "id": "eco09.hsc.t4.micro.2", "label": "Effects on product and factor markets, including competition policy" }
+              ]
+            },
+            {
+              "id": "eco09.hsc.t4.labour",
+              "title": "Labour market policy",
+              "points": [
+                { "id": "eco09.hsc.t4.labour.1", "label": "Institutions: national system, minimum wages, awards, enterprise agreements, dispute resolution" },
+                { "id": "eco09.hsc.t4.labour.2", "label": "Centralised, decentralised and individual wage determination" },
+                { "id": "eco09.hsc.t4.labour.3", "label": "Education, training and employment programs" }
+              ]
+            },
+            {
+              "id": "eco09.hsc.t4.envmgmt",
+              "title": "Environmental management",
+              "points": [
+                { "id": "eco09.hsc.t4.envmgmt.1", "label": "Regulation and market-based environmental policies" },
+                { "id": "eco09.hsc.t4.envmgmt.2", "label": "Targets and international agreements" }
+              ]
+            },
+            {
+              "id": "eco09.hsc.t4.limits",
+              "title": "Limitations and the policy mix",
+              "points": [
+                { "id": "eco09.hsc.t4.limits.1", "label": "Limitations: time lags, global influences, political constraints" },
+                { "id": "eco09.hsc.t4.limits.2", "label": "Policy responses to each economic objective" },
+                { "id": "eco09.hsc.t4.limits.3", "label": "Selecting a policy mix" }
+              ]
+            },
+            {
+              "id": "eco09.hsc.t4.skills",
+              "title": "Skills",
+              "points": [
+                { "id": "eco09.hsc.t4.skills.1", "label": "Discuss and evaluate policy options for contemporary and hypothetical problems", "skill": true }
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}
