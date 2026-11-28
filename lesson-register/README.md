@@ -11,6 +11,9 @@ every class and subject.
   program for the faculty, on screen or as a download.
 - **Resources.** Program resources are rated each lesson; anything else used (web pages, videos, worksheets, quizzes and so on) is added
   with its type and web address, and can be picked again in later lessons.
+- **Worksheets from the Worksheet Maker.** Worksheets saved to Google Drive from the HSC Economics Worksheet Maker are listed
+  under *Resources not in the program*, best matches for the lesson's topic first, and added as a Worksheet with its Drive link
+  (see [below](#worksheets-from-the-worksheet-maker)).
 
 Built for one teacher first, and for a whole faculty later: every teacher signs in to their own classes, and Head Teachers can read every
 class in the faculty.
@@ -75,6 +78,22 @@ database was set up before they were added.)
 
 Open **Faculty** to see the join code. Colleagues create an account and join with the code; they start as teachers and see only their own
 classes. An admin can make someone a Head Teacher from the same page.
+
+## Worksheets from the Worksheet Maker
+
+The HSC Economics Worksheet Maker (`phillippain.github.io/HSC-Economics/worksheet-maker/`) can save each worksheet into a
+**Worksheets** folder in the topic's resources on the shared drive, through the teacher's own **Worksheet saver** (a Google Apps
+Script web app in their school account; set up from the Worksheet Maker's *Save to Google Drive* dialog, code in
+`HSC-Economics/worksheet-maker/drive-saver/`).
+
+- Both tools are on the same site, so on a computer where the saver is set up, *Record lesson* lists the saved worksheets by itself:
+  it reads the saver's address and private key from this browser (`worksheet-maker:drive`) and asks the saver for the list
+  (`src/lib/worksheets.ts`, `src/components/WorksheetPicker.tsx`). Nothing about the saver is stored in the database.
+- On another device, open *Worksheets from the Worksheet Maker* in *Resources not in the program* and paste the connection code
+  from the Worksheet Maker (Save to Google Drive › Drive settings › Copy a connection code). *Disconnect this browser* removes it.
+- If the saver can't be reached, the worksheets saved from this computer (`worksheet-maker:drive-saved`) are offered instead.
+- A picked worksheet becomes an added resource of type Worksheet, with the Drive link to the student copy and the folder as its
+  note, so it can be rated and appears under *Used before with this class* afterwards.
 
 ## Programs and syllabuses
 

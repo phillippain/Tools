@@ -10,6 +10,8 @@ import { getCourse, outcomeLabel, pointLabel } from '../lib/syllabus';
 import { RESOURCE_TYPES, type ActivityState, type AddedResource, type Item, type LessonRecord, type LessonSlot, type Rating, type Resource, type ResourceType } from '../lib/types';
 import { newId, safeHref, shortDate, todayISO } from '../lib/util';
 import { slotsWithRecords, slotTime, weekLabel } from '../lib/calendar';
+import { lessonFocus } from '../lib/worksheets';
+import { WorksheetPicker } from '../components/WorksheetPicker';
 
 const typeLabel = (t?: ResourceType) => RESOURCE_TYPES.find((x) => x.value === t)?.label ?? 'Resource';
 
@@ -114,6 +116,8 @@ function LessonForm({ bundle, lessonId }: { bundle: ClassBundle; lessonId?: stri
         resources.push(r);
       }
   const course = getCourse(program.syllabusId, program.courseId);
+  const itemKey = rec.items.map((x) => x.itemId).join('|');
+  const focus = useMemo(() => lessonFocus(program, itemKey ? itemKey.split('|') : []), [program, itemKey]);
   const withPlans = students.filter((s) => s.planned.length > 0 && s.active);
 
   function toggleItem(item: Item) {
@@ -495,6 +499,7 @@ function LessonForm({ bundle, lessonId }: { bundle: ClassBundle; lessonId?: stri
                   </div>
                 </>
               )}
+              <WorksheetPicker focus={focus} added={rec.addedResources} onAdd={(r) => update((d) => void d.addedResources.push(r))} />
               <details style={{ marginTop: '0.75rem' }}>
                 <summary>Add a new resource</summary>
                 <div className="grid-2">
