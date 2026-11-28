@@ -1,7 +1,9 @@
 # Question review
 
 Approve, flag or remove the questions Claude wrote for the HSC Economics
-[Worksheet Maker](https://phillippain.github.io/HSC-Economics/worksheet-maker/), one click each.
+[Worksheet Maker](https://phillippain.github.io/HSC-Economics/worksheet-maker/), one click each: the HSC bank
+(2009 syllabus dot points) and the Year 11 bank (2025 syllabus, files `y11-*.txt`). The course and topic filter
+shows one course, topic or focus area at a time.
 
 - `index.html` – the page (one file). Published at `https://phillippain.github.io/Tools/question-review/`.
 

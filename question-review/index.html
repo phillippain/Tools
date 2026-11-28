@@ -102,7 +102,7 @@ dialog .foot{display:flex;flex-wrap:wrap;gap:.5rem;justify-content:flex-end;marg
 <body>
 <main>
   <h1>Question review</h1>
-  <p class="lede">The questions Claude wrote for the HSC Economics <a href="https://phillippain.github.io/HSC-Economics/worksheet-maker/">Worksheet Maker</a>, each with its answer. <b>Approve</b> the good ones, flag any that <b>need a fix</b> with a note, and <b>remove</b> any you don’t want. The Worksheet Maker picks up your decisions within a minute or two of saving.</p>
+  <p class="lede">The questions Claude wrote for the HSC Economics <a href="https://phillippain.github.io/HSC-Economics/worksheet-maker/">Worksheet Maker</a> (HSC and, for the 2025 syllabus, Year 11), each with its answer. <b>Approve</b> the good ones, flag any that <b>need a fix</b> with a note, and <b>remove</b> any you don’t want. The Worksheet Maker picks up your decisions within a minute or two of saving.</p>
 
   <div id="banner"></div>
 
@@ -112,7 +112,9 @@ dialog .foot{display:flex;flex-wrap:wrap;gap:.5rem;justify-content:flex-end;marg
     <div class="tally" id="tally" role="group" aria-label="Show questions by status"></div>
     <div class="track" id="track" aria-hidden="true"></div>
     <div class="filters">
-      <select id="f-t" aria-label="Topic"><option value="">All topics</option><option value="1">Topic 1 The global economy</option><option value="2">Topic 2 Australia’s place in the global economy</option><option value="3">Topic 3 Economic issues</option><option value="4">Topic 4 Economic policies and management</option></select>
+      <select id="f-t" aria-label="Course and topic"><option value="">All courses and topics</option>
+        <optgroup label="HSC (2009 syllabus)"><option value="hsc">All HSC questions</option><option value="1">Topic 1 The global economy</option><option value="2">Topic 2 Australia’s place in the global economy</option><option value="3">Topic 3 Economic issues</option><option value="4">Topic 4 Economic policies and management</option></optgroup>
+        <optgroup label="Year 11 (2025 syllabus)"><option value="y11">All Year 11 questions</option><option value="P1">Focus area 1 Introduction to economics</option><option value="P2">Focus area 2 Markets</option><option value="P3">Focus area 3 Household and business sector</option><option value="P4">Focus area 4 Financial sector</option><option value="P5">Focus area 5 Government sector</option><option value="P6">Focus area 6 International sector</option></optgroup></select>
       <select id="f-f" aria-label="Type"><option value="">All types</option></select>
       <select id="f-file" aria-label="Bank file"><option value="">All bank files</option></select>
       <input type="search" id="f-q" placeholder="Search the questions" aria-label="Search the questions">
@@ -267,7 +269,7 @@ function decide(q, s, note) {
 function matches(q) {
   const st = statusOf(q);
   if (view.s !== 'all' && st.s !== view.s) return false;
-  if (view.t && !q.c.some(c => c[0] === view.t)) return false;
+  if (view.t && !q.c.some(c => view.t === 'hsc' ? /^\d/.test(c) : view.t === 'y11' ? c[0] === 'P' : view.t[0] === 'P' ? c.slice(0, 2) === view.t : c[0] === view.t)) return false;
   if (view.f && q.f !== view.f) return false;
   if (view.file && q.file !== view.file) return false;
   if (view.q && !(q.html + ' ' + q.id).toLowerCase().includes(view.q)) return false;
