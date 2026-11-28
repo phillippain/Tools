@@ -1,0 +1,203 @@
+<!doctype html>
+<html lang="en-AU">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="color-scheme" content="light dark">
+  <meta name="robots" content="noindex, nofollow, noarchive">
+  <meta name="referrer" content="no-referrer">
+  <title>Staff tools</title>
+  <!--
+    This file is BUILT. Do not edit it by hand.
+    The page content is encrypted. To change the links or the password, edit
+    _home/home.html (kept on your computer only) and run "_home/Lock home page.command".
+  -->
+  <style>
+    :root {
+      color-scheme: light dark;
+      --bg: #f6f7f9;
+      --card: #ffffff;
+      --ink: #14213d;
+      --soft: #4a5568;
+      --line: #d9dee7;
+      --brand: #1d4ed8;
+      --on-brand: #ffffff;
+      --bad: #b42318;
+      font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+      line-height: 1.5;
+    }
+    @media (prefers-color-scheme: dark) {
+      :root {
+        --bg: #0f1420;
+        --card: #171e2d;
+        --ink: #e8edf5;
+        --soft: #a9b4c6;
+        --line: #2a3345;
+        --brand: #8fb3ff;
+        --on-brand: #0f1420;
+        --bad: #ff9c8f;
+      }
+    }
+    * { box-sizing: border-box; }
+    body { margin: 0; background: var(--bg); color: var(--ink); }
+    main { max-width: 40rem; margin: 0 auto; padding: 2.5rem 1.25rem 3rem; }
+    h1 { font-size: 1.75rem; margin: 0 0 0.25rem; }
+    h2 { font-size: 0.8rem; letter-spacing: 0.08em; text-transform: uppercase; color: var(--soft); margin: 2rem 0 0.75rem; }
+    .lede { color: var(--soft); margin: 0 0 1.5rem; }
+    ul { list-style: none; margin: 0; padding: 0; display: grid; gap: 0.75rem; }
+    a.tool {
+      display: block;
+      padding: 1rem 1.1rem;
+      background: var(--card);
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      color: inherit;
+      text-decoration: none;
+    }
+    a.tool:hover { border-color: var(--brand); }
+    a.tool:focus-visible, button:focus-visible, input:focus-visible { outline: 3px solid var(--brand); outline-offset: 2px; }
+    .name { display: block; font-size: 1.1rem; font-weight: 600; color: var(--brand); }
+    .desc { display: block; margin-top: 0.15rem; color: var(--soft); }
+    .note { color: var(--soft); font-size: 0.9rem; margin: 0.75rem 0 0; }
+
+    /* Lock screen */
+    #lock { max-width: 24rem; margin: 12vh auto 0; padding: 0 1.25rem; }
+    #lock form { background: var(--card); border: 1px solid var(--line); border-radius: 14px; padding: 1.5rem; }
+    #lock h1 { font-size: 1.4rem; }
+    label { display: block; font-weight: 600; margin: 1rem 0 0.35rem; }
+    input[type="password"] {
+      width: 100%; font: inherit; padding: 0.65rem 0.75rem; color: var(--ink);
+      background: var(--bg); border: 1px solid var(--line); border-radius: 8px;
+    }
+    .check { display: flex; gap: 0.5rem; align-items: center; margin: 0.9rem 0 0; color: var(--soft); font-weight: 400; }
+    button { font: inherit; cursor: pointer; border-radius: 8px; }
+    button.primary { width: 100%; margin-top: 1.1rem; padding: 0.7rem 1rem; font-weight: 600; background: var(--brand); color: var(--on-brand); border: 0; }
+    button.primary[disabled] { opacity: 0.6; cursor: progress; }
+    button.quiet { margin-top: 2rem; padding: 0.45rem 0.9rem; background: transparent; color: var(--soft); border: 1px solid var(--line); }
+    #msg { min-height: 1.5em; margin: 0.75rem 0 0; color: var(--bad); }
+    [hidden] { display: none !important; }
+  </style>
+</head>
+<body>
+  <div id="lock">
+    <form id="form" autocomplete="on">
+      <h1>Staff tools</h1>
+      <p class="lede" style="margin-bottom:0">This page is for teachers. Enter the staff password to continue.</p>
+      <label for="pw">Password</label>
+      <input id="pw" name="password" type="password" autocomplete="current-password" required autofocus>
+      <label class="check"><input id="keep" type="checkbox"> Stay unlocked on this device</label>
+      <button class="primary" id="go" type="submit">Unlock</button>
+      <p id="msg" role="alert"></p>
+    </form>
+  </div>
+
+  <main id="home" hidden>
+    <div id="content"></div>
+    <button class="quiet" id="relock" type="button">Lock this page</button>
+  </main>
+
+  <script id="payload" type="application/octet-stream">
+__PAYLOAD__
+  </script>
+  <script>
+  (function () {
+    'use strict';
+    var ITERATIONS = 600000;               // must match "Lock home page.command"
+    var MARK = '<!-- staff-home -->';      // first line of home.html; proves the password was right
+    var $ = function (id) { return document.getElementById(id); };
+    var msg = $('msg'), go = $('go');
+
+    function fromB64(s) {
+      var bin = atob(s.replace(/\s+/g, '')), out = new Uint8Array(bin.length);
+      for (var i = 0; i < bin.length; i++) out[i] = bin.charCodeAt(i);
+      return out;
+    }
+    function toB64(u) {
+      var s = ''; for (var i = 0; i < u.length; i++) s += String.fromCharCode(u[i]);
+      return btoa(s);
+    }
+
+    var data, salt, storeKey;
+    try {
+      data = fromB64($('payload').textContent);   // "Salted__" + 8-byte salt + AES-256-CBC ciphertext
+      salt = data.slice(8, 16);
+      storeKey = 'staff-home:' + toB64(salt);     // changes whenever the page is re-locked
+    } catch (e) { data = null; }
+
+    function stored(kind) {
+      try { return window[kind].getItem(storeKey); } catch (e) { return null; }
+    }
+    function forget() {
+      ['localStorage', 'sessionStorage'].forEach(function (kind) {
+        try {
+          var s = window[kind];
+          for (var i = s.length - 1; i >= 0; i--) {
+            var k = s.key(i);
+            if (k && k.indexOf('staff-home:') === 0) s.removeItem(k);
+          }
+        } catch (e) {}
+      });
+    }
+
+    async function derive(password) {
+      var material = await crypto.subtle.importKey('raw', new TextEncoder().encode(password), 'PBKDF2', false, ['deriveBits']);
+      var bits = await crypto.subtle.deriveBits({ name: 'PBKDF2', salt: salt, iterations: ITERATIONS, hash: 'SHA-256' }, material, 384);
+      return new Uint8Array(bits);          // 32-byte key followed by 16-byte IV
+    }
+    async function decrypt(bits) {
+      var key = await crypto.subtle.importKey('raw', bits.slice(0, 32), { name: 'AES-CBC' }, false, ['decrypt']);
+      var plain = await crypto.subtle.decrypt({ name: 'AES-CBC', iv: bits.slice(32, 48) }, key, data.slice(16));
+      var text = new TextDecoder('utf-8', { fatal: true }).decode(plain);
+      if (text.indexOf(MARK) !== 0) throw new Error('wrong password');
+      return text;
+    }
+    function show(html) {
+      $('content').innerHTML = html;
+      $('lock').hidden = true;
+      $('home').hidden = false;
+      var h = $('content').querySelector('h1');
+      if (h) { h.tabIndex = -1; h.focus({ preventScroll: true }); h.style.outline = 'none'; }
+    }
+
+    if (!data || !window.crypto || !crypto.subtle) {
+      msg.textContent = 'This page can’t be unlocked here. Open it from its https:// address in an up-to-date browser.';
+      go.disabled = true;
+      return;
+    }
+
+    // Already unlocked on this device or in this tab?
+    var saved = stored('localStorage') || stored('sessionStorage');
+    if (saved) {
+      decrypt(fromB64(saved)).then(show).catch(forget);
+    }
+
+    $('form').addEventListener('submit', async function (ev) {
+      ev.preventDefault();
+      msg.textContent = '';
+      go.disabled = true; go.textContent = 'Unlocking…';
+      try {
+        var bits = await derive($('pw').value);
+        var html = await decrypt(bits);
+        forget();
+        try { ($('keep').checked ? localStorage : sessionStorage).setItem(storeKey, toB64(bits)); } catch (e) {}
+        $('pw').value = '';
+        show(html);
+      } catch (e) {
+        msg.textContent = 'That password didn’t work. Check it and try again.';
+        $('pw').select();
+      } finally {
+        go.disabled = false; go.textContent = 'Unlock';
+      }
+    });
+
+    $('relock').addEventListener('click', function () {
+      forget();
+      $('content').innerHTML = '';
+      $('home').hidden = true;
+      $('lock').hidden = false;
+      $('pw').focus();
+    });
+  })();
+  </script>
+</body>
+</html>

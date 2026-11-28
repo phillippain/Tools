@@ -1,6 +1,7 @@
 # Publishes this repository to GitHub Pages on every push to main.
 # Every tool folder is published as it is (for example interview-timekeeper/),
 # except lesson-register/, which is built first and published as its built site.
+# _home/ (what builds the password-protected home page) is not published.
 #
 # Turn on once: Settings → Pages → Build and deployment → Source: GitHub Actions.
 # For Lesson Register's database, set two repository variables (Settings →
@@ -46,7 +47,7 @@ jobs:
           mkdir _site
           for f in *; do
             case "$f" in
-              _site | lesson-register) ;;
+              _site | lesson-register | _home) ;;
               *) cp -R "$f" _site/ ;;
             esac
           done

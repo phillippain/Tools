@@ -1,1 +1,5 @@
 .DS_Store
+
+# Staff home page: the unencrypted source stays on this computer only
+_home/home.html
+_home/.index.*
