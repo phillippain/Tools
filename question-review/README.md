@@ -37,3 +37,12 @@ shows one course, topic or focus area at a time.
   then ask Claude to apply them.
 
 Keys: J and K move between questions; A approves, F flags for a fix, R removes, U undoes.
+
+## Legal Studies
+
+Add `?bank=legal` to the address (or use the **Bank** switch under the heading) to review the Legal Studies
+Worksheet Maker's bank instead: `HSC-Legal-Studies/worksheet-maker/review-data.json`, with decisions saved to
+`HSC-Legal-Studies/worksheet-maker/bank/reviews.json`. It covers the 2009 HSC, 2025 Year 11 and 2025 Year 12
+questions and the key terms written for the topics the Crime Glossary does not cover. The Legal Studies bank
+needs its own GitHub token, with **Contents: Read and write** for the **HSC-Legal-Studies** repository; the
+token and any unsaved decisions are kept separately from the Economics ones.

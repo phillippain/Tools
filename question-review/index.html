@@ -144,11 +144,14 @@ dialog .foot{display:flex;flex-wrap:wrap;gap:.5rem;justify-content:flex-end;marg
 
 <script>
 {
-const REPO = 'phillippain/HSC-Economics', PATH = 'worksheet-maker/bank/reviews.json', BRANCH = 'main';
-const API = `https://api.github.com/repos/${REPO}`;
 const params = new URLSearchParams(location.search);
-const SRC = params.get('src') || (location.hostname === 'phillippain.github.io' ? '/HSC-Economics/worksheet-maker/' : 'https://phillippain.github.io/HSC-Economics/worksheet-maker/');
-const TK = 'question-review:github', PK = 'question-review:pending';
+/* Two banks share this page: HSC Economics (the default) and Legal Studies (?bank=legal). Each has its own repository,
+   its own GitHub token and its own unsaved decisions. */
+const LEGAL = params.get('bank') === 'legal', RN = LEGAL ? 'HSC-Legal-Studies' : 'HSC-Economics';
+const REPO = 'phillippain/' + RN, PATH = 'worksheet-maker/bank/reviews.json', BRANCH = 'main';
+const API = `https://api.github.com/repos/${REPO}`;
+const SRC = params.get('src') || (location.hostname === 'phillippain.github.io' ? `/${RN}/worksheet-maker/` : `https://phillippain.github.io/${RN}/worksheet-maker/`);
+const TK = 'question-review:github' + (LEGAL ? ':legal' : ''), PK = 'question-review:pending' + (LEGAL ? ':legal' : '');
 const ABOUT = 'The teacher\'s decisions on the questions Claude wrote for the Worksheet Maker bank. Saved by the Question review page on the staff Tools site (https://phillippain.github.io/Tools/question-review/); the Worksheet Maker reads this file when it opens. s: ok = approved, fix = needs a fix (see note; not used until fixed), out = removed (not used). h is the question\'s fingerprint when the decision was made: a question changed since then goes back on the review list.';
 const STATUS = { new: 'To review', fix: 'Needs a fix', ok: 'Approved', out: 'Removed', all: 'All' };
 const PAGE = 25;
@@ -223,7 +226,7 @@ async function save() {
       if (r.ok) { const j = await r.json(); SHA = j.content && j.content.sha; SAVED = sorted; break; }
       if ((r.status === 409 || r.status === 422) && attempt < 2) continue;          // someone saved in between: read again and retry
       if (r.status === 401) throw { msg: 'GitHub did not accept the access token. Connect again with a new one.' };
-      if (r.status === 403 || r.status === 404) throw { msg: 'This token can’t save to HSC-Economics. Give it Contents: Read and write for that repository (Connect GitHub…).' };
+      if (r.status === 403 || r.status === 404) throw { msg: 'This token can’t save to ' + RN + '. Give it Contents: Read and write for that repository (Connect GitHub…).' };
       throw { msg: `GitHub answered ${r.status}. Your decisions are kept in this browser; try Save now again.` };
     }
     for (const [id, d] of Object.entries(batch)) if (JSON.stringify(PENDING[id]) === JSON.stringify(d)) delete PENDING[id];
@@ -269,7 +272,8 @@ function decide(q, s, note) {
 function matches(q) {
   const st = statusOf(q);
   if (view.s !== 'all' && st.s !== view.s) return false;
-  if (view.t && !q.c.some(c => view.t === 'hsc' ? /^\d/.test(c) : view.t === 'y11' ? c[0] === 'P' : view.t[0] === 'P' ? c.slice(0, 2) === view.t : c[0] === view.t)) return false;
+  if (view.t && LEGAL) { const G = { hsc: ['crime', 'hr', 'fam', 'shel'], y11: ['inv', 'dis', 'chg', 'exp'], y12: ['cj', 'ir', 'fl', 'hl'] }[view.t] || [view.t]; if (!q.c.some(c => G.includes(c.split('.')[0]))) return false; }
+  else if (view.t && !q.c.some(c => view.t === 'hsc' ? /^\d/.test(c) : view.t === 'y11' ? c[0] === 'P' : view.t[0] === 'P' ? c.slice(0, 2) === view.t : c[0] === view.t)) return false;
   if (view.f && q.f !== view.f) return false;
   if (view.file && q.file !== view.file) return false;
   if (view.q && !(q.html + ' ' + q.id).toLowerCase().includes(view.q)) return false;
@@ -343,6 +347,16 @@ function toast(t) {
 /* ---------- events */
 $('#tally').addEventListener('click', e => { const b = e.target.closest('[data-s]'); if (!b) return; view.s = b.dataset.s; render(); });
 $('#f-t').addEventListener('change', e => { view.t = e.target.value; render(); });
+if (LEGAL) {
+  document.title = 'Question review: Legal Studies';
+  $('#f-t').innerHTML = '<option value="">All courses and topics</option>'
+    + '<optgroup label="HSC (2009 syllabus)"><option value="hsc">All 2009 HSC questions</option><option value="crime">Crime</option><option value="hr">Human Rights</option><option value="fam">Family</option><option value="shel">Shelter</option></optgroup>'
+    + '<optgroup label="Year 11 (2025 syllabus)"><option value="y11">All Year 11 questions</option><option value="inv">Investigating the law</option><option value="dis">Disputes under the law</option><option value="chg">Changing the law</option><option value="exp">Experiences with the law</option></optgroup>'
+    + '<optgroup label="Year 12 (2025 syllabus)"><option value="y12">All 2025 Year 12 questions</option><option value="cj">The criminal justice system</option><option value="ir">International relations and human rights</option><option value="fl">Family law</option><option value="hl">Housing law</option></optgroup>';
+  const swap = el => { for (const n of [...el.childNodes]) { if (n.nodeType === 3) n.textContent = n.textContent.replace(/HSC-Economics/g, RN).replace(/HSC Economics/g, 'Legal Studies').replace(' (HSC and, for the 2025 syllabus, Year 11)', ' (2009 HSC, 2025 Year 11 and 2025 Year 12)'); else if (n.nodeType === 1) { if (n.tagName === 'A' && /HSC-Economics/.test(n.getAttribute('href') || '')) n.href = n.getAttribute('href').replace('HSC-Economics', RN); swap(n); } } };
+  document.querySelectorAll('.lede, dialog').forEach(swap);
+}
+$('.lede').insertAdjacentHTML('afterend', `<p class="lede" style="margin-top:-6px"><b>Bank:</b> ${LEGAL ? '<a href="./">HSC Economics</a> · <b>Legal Studies</b>' : '<b>HSC Economics</b> · <a href="?bank=legal">Legal Studies</a>'}</p>`);
 $('#f-f').addEventListener('change', e => { view.f = e.target.value; render(); });
 $('#f-file').addEventListener('change', e => { view.file = e.target.value; render(); });
 $('#f-q').addEventListener('input', e => { view.q = e.target.value.trim().toLowerCase(); render(); });
@@ -388,7 +402,7 @@ $('#b-save').addEventListener('click', save);
 $('#banner').addEventListener('click', e => {
   if (e.target.id === 'b-gh2') openGh();
   if (e.target.id === 'b-copy') {
-    const text = 'Please apply these question review decisions to worksheet-maker/bank/reviews.json in HSC-Economics:\n' + JSON.stringify(PENDING, null, 1);
+    const text = 'Please apply these question review decisions to worksheet-maker/bank/reviews.json in ' + RN + ':\n' + JSON.stringify(PENDING, null, 1);
     navigator.clipboard.writeText(text).then(() => toast('Copied. Paste it to Claude.'), () => toast('Copying was blocked: use Download them instead.'));
   }
   if (e.target.id === 'b-dl') {
@@ -416,9 +430,9 @@ $('#gh-ok').addEventListener('click', async () => {
   try {
     const r = await gh('');
     if (r.status === 401) throw 'GitHub did not accept that token. Check you copied all of it.';
-    if (!r.ok) throw `GitHub answered ${r.status}. Check the token can see HSC-Economics.`;
+    if (!r.ok) throw `GitHub answered ${r.status}. Check the token can see ${RN}.`;
     const j = await r.json();
-    if (j.permissions && j.permissions.push === false) throw 'That token can read HSC-Economics but not change it. Set Contents to Read and write.';
+    if (j.permissions && j.permissions.push === false) throw 'That token can read ' + RN + ' but not change it. Set Contents to Read and write.';
     writeToken(TOKEN); dlg.close(); ghProblem = '';
     const cur = await fetchSaved(); SAVED = cur.items; SHA = cur.sha;
     showSave(); render(); toast('GitHub connected.');
